@@ -1,0 +1,1 @@
+import type {ReactNode} from "react";export function DataTable({children,label}:{children:ReactNode;label:string}){return <div className="overflow-x-auto rounded-xl border bg-white"><table className="w-full text-left text-sm" aria-label={label}>{children}</table></div>}

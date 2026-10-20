@@ -1,0 +1,1 @@
+export default function Loading(){return <div className="space-y-5" aria-busy="true" aria-label="Đang tải"><div className="h-8 w-64 animate-pulse rounded bg-slate-200"/><div className="h-24 animate-pulse rounded-xl bg-slate-100"/><div className="h-72 animate-pulse rounded-xl bg-slate-100"/></div>}

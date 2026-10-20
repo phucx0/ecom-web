@@ -1,0 +1,3 @@
+import {NextResponse} from "next/server";import {createBackup,listBackups} from "@/lib/admin/backup";import {requireAdminApi,rejectCrossOrigin} from "@/lib/admin/security";
+export async function GET(){const auth=await requireAdminApi();if(auth.response)return auth.response;return NextResponse.json({data:await listBackups()})}
+export async function POST(request:Request){const auth=await requireAdminApi();if(auth.response)return auth.response;const csrf=rejectCrossOrigin(request);if(csrf)return csrf;try{return NextResponse.json({data:await createBackup()},{status:201})}catch(error){return NextResponse.json({error:{code:"BACKUP_FAILED",message:error instanceof Error?error.message:"Không thể tạo backup."}},{status:500})}}

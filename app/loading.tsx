@@ -1,0 +1,1 @@
+export default function Loading() { return <main className="mx-auto max-w-6xl animate-pulse px-4 py-20" aria-busy="true"><div className="h-4 w-28 rounded bg-slate-200" /><div className="mt-5 h-12 max-w-xl rounded bg-slate-200" /><div className="mt-4 h-5 max-w-2xl rounded bg-slate-200" /><span className="sr-only">Đang tải</span></main>; }

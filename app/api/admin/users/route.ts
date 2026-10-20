@@ -1,0 +1,1 @@
+import {NextResponse} from "next/server";import {requireAdminApi} from "@/lib/admin/security";import {allUsers,safeAdminUser} from "@/lib/admin/users";export async function GET(){const auth=await requireAdminApi();if(auth.response)return auth.response;return NextResponse.json({data:(await allUsers()).map(safeAdminUser)})}

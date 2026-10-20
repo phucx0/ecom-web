@@ -1,0 +1,3 @@
+import "server-only";import {NextResponse} from "next/server";import {currentUser} from "@/lib/auth/session";
+export async function requireAdminApi(){const user=await currentUser();if(!user)return {user:null,response:NextResponse.json({error:{code:"UNAUTHORIZED",message:"Cần đăng nhập."}},{status:401})};if(user.role!=="admin")return {user:null,response:NextResponse.json({error:{code:"FORBIDDEN",message:"Chỉ Admin được phép thực hiện thao tác này."}},{status:403})};return {user,response:null}}
+export function rejectCrossOrigin(request:Request){const origin=request.headers.get("origin");if(origin&&origin!==new URL(request.url).origin)return NextResponse.json({error:{code:"CSRF_REJECTED",message:"Nguồn yêu cầu không hợp lệ."}},{status:403});return null}

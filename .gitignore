@@ -1,0 +1,16 @@
+# Local environment files may contain CouchDB credentials
+.env.local
+.env*.local
+
+# Dependencies and Next.js build output
+node_modules/
+.next/
+out/
+
+# Logs and local tooling
+*.log
+.DS_Store
+Thumbs.db
+
+# Server-side CouchDB backup files and operation logs
+.data/

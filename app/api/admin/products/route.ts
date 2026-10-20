@@ -1,0 +1,3 @@
+import { NextResponse } from "next/server"; import { catalogApiError,requireAdminApi } from "@/lib/catalog/api"; import { createProduct,listProducts } from "@/lib/catalog/repository";
+export async function GET(){const denied=await requireAdminApi();if(denied)return denied;try{return NextResponse.json({data:await listProducts({includeInactive:true})})}catch(e){return catalogApiError(e)}}
+export async function POST(r:Request){const denied=await requireAdminApi();if(denied)return denied;try{const d=await createProduct(await r.json());return NextResponse.json({data:d},{status:201})}catch(e){return catalogApiError(e)}}

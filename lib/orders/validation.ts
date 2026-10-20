@@ -1,0 +1,2 @@
+import { z } from "zod";
+export const checkoutSchema=z.object({customer:z.object({name:z.string().trim().min(2).max(100),phone:z.string().trim().min(8).max(20)}),shipping_address:z.object({line1:z.string().trim().min(5).max(200),city:z.string().trim().min(2).max(100)}),items:z.array(z.object({product_id:z.string().startsWith("product:"),quantity:z.number().int().min(1).max(99)})).min(1).max(50),payment_method:z.literal("COD")});
