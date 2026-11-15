@@ -70,6 +70,12 @@ API sử dụng: [tạo database](https://docs.couchdb.org/en/stable/api/databas
 
 Đặt tạm `ADMIN_EMAIL`, `ADMIN_NAME`, `ADMIN_PASSWORD` cùng các biến CouchDB trong môi trường shell rồi chạy `npm.cmd run admin:init`. Script chỉ tạo mới, không ghi đè tài khoản tồn tại và không log mật khẩu. Không lưu mật khẩu Admin thật vào repository.
 
+## Postman collection
+
+Import [collection](<postman/Retail Shop.postman_collection.json>) và [environment Local](<postman/Retail Shop Local.postman_environment.json>) vào Postman. Chọn **Retail Shop Local**, điền mật khẩu customer/admin rồi đăng nhập theo role. Collection có 35 request, tự lưu ID và `_rev`, dùng cookie session của ứng dụng.
+
+Xem [hướng dẫn Postman](postman/README.md) để chạy các luồng catalog, đơn hàng, quản lý tài khoản và backup/restore. Gửi từng request theo luồng; không chạy toàn bộ collection một lượt.
+
 ## Kiểm tra
 
 ```powershell

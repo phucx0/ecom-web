@@ -1,0 +1,2004 @@
+{
+  "info": {
+    "name": "Retail Shop — Next.js + CouchDB",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Collection đối chiếu trực tiếp các route đang triển khai trong app/api. Import kèm Retail Shop Local.postman_environment.json. Đăng nhập theo role trước khi gửi request; Postman tự giữ retail_session trong cookie jar. Xem postman/README.md để chạy các luồng. Các script chỉ lưu ID/revision sau response thành công. Không Run toàn bộ collection: có các luồng thay thế nhau, xóa dữ liệu thử nghiệm và restore cần chọn file thủ công."
+  },
+  "auth": {
+    "type": "noauth"
+  },
+  "variable": [
+    {
+      "key": "checkout_product_id",
+      "value": "product:demo-notebook",
+      "type": "string"
+    },
+    {
+      "key": "checkout_product_slug",
+      "value": "demo-so-tay-a5",
+      "type": "string"
+    },
+    {
+      "key": "search",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "filter_category_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "idempotency_key",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "order_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "order_rev",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "catalog_category_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "catalog_category_rev",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "catalog_category_slug",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "catalog_product_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "catalog_product_rev",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "catalog_product_slug",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "managed_user_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "managed_user_rev",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "managed_user_name",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "managed_user_phone",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "managed_user_account_status",
+      "value": "active",
+      "type": "string"
+    },
+    {
+      "key": "tracking_code",
+      "value": "POSTMAN-DEMO-001",
+      "type": "string"
+    },
+    {
+      "key": "backup_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "restore_database",
+      "value": "retail_shop_restore_postman_demo",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "01 — Public",
+      "description": "Không yêu cầu đăng nhập. Product mặc định lấy từ dữ liệu seed.",
+      "item": [
+        {
+          "name": "Health — kiểm tra ứng dụng và CouchDB",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/health",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "health"
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', function () {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([200]);",
+                  "});",
+                  "if ([200].includes(pm.response.code)) {",
+                  "  const json = pm.response.json();",
+                  "  pm.test('CouchDB đã kết nối', function () { pm.expect(json.status).to.eql('ok'); pm.expect(json.details.connected).to.eql(true); });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Danh sách danh mục đang hoạt động",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/categories",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "categories"
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', function () {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([200]);",
+                  "});",
+                  "if ([200].includes(pm.response.code)) {",
+                  "  const json = pm.response.json();",
+                  "  pm.test('Danh sách danh mục', function () { pm.expect(json.data).to.be.an('array'); });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Danh sách sản phẩm — tìm kiếm và lọc",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/products?q={{search}}&category={{filter_category_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "products"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "{{search}}"
+                },
+                {
+                  "key": "category",
+                  "value": "{{filter_category_id}}"
+                }
+              ]
+            },
+            "description": "Để trống search và filter_category_id để lấy toàn bộ sản phẩm active."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', function () {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([200]);",
+                  "});",
+                  "if ([200].includes(pm.response.code)) {",
+                  "  const json = pm.response.json();",
+                  "  pm.test('Danh sách sản phẩm', function () { pm.expect(json.data).to.be.an('array'); });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Chi tiết sản phẩm theo slug",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/products/{{checkout_product_slug}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "products",
+                "{{checkout_product_slug}}"
+              ]
+            },
+            "description": "Mặc định dùng sản phẩm sổ tay trong database/seed.mjs. Tự sửa biến nếu chưa seed."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', function () {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([200]);",
+                  "});",
+                  "if ([200].includes(pm.response.code)) {",
+                  "  const json = pm.response.json();",
+                  "  pm.test('Sản phẩm active', function () { pm.expect(json.data.is_active).to.eql(true); });",
+                  "pm.collectionVariables.set('checkout_product_id', json.data._id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "02 — Authentication & Profile",
+      "description": "Đăng ký hoặc đăng nhập customer. Chỉ đăng xuất sau khi hoàn tất các request cần session.",
+      "item": [
+        {
+          "name": "Đăng ký customer",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/auth/register",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "register"
+              ]
+            },
+            "description": "Tạo tài khoản mới và đặt cookie session. Email đã tồn tại trả 409. Điền customer_password trước khi gửi.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"{{customer_name}}\",\n  \"email\": \"{{customer_email}}\",\n  \"phone\": \"{{customer_phone}}\",\n  \"password\": \"{{customer_password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 201', function () {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([201]);",
+                  "});",
+                  "if ([201].includes(pm.response.code)) {",
+                  "  const json = pm.response.json();",
+                  "  pm.test('Đúng role customer', function () { pm.expect(json.data.role).to.eql('customer'); });",
+                  "if (json.data.role === 'customer') {",
+                  "  pm.collectionVariables.set('managed_user_id', json.data._id);",
+                  "}",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Đăng nhập customer",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/auth/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Postman tự giữ cookie retail_session. Request này chuyển session hiện tại sang customer.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{customer_email}}\",\n  \"password\": \"{{customer_password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', function () {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([200]);",
+                  "});",
+                  "if ([200].includes(pm.response.code)) {",
+                  "  const json = pm.response.json();",
+                  "  pm.test('Đúng role customer', function () { pm.expect(json.data.role).to.eql('customer'); });",
+                  "if (json.data.role === 'customer') {",
+                  "  pm.collectionVariables.set('managed_user_id', json.data._id);",
+                  "}",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Tài khoản đang đăng nhập",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/auth/me",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "me"
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', function () {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([200]);",
+                  "});",
+                  "if ([200].includes(pm.response.code)) {",
+                  "  const json = pm.response.json();",
+                  "  pm.test('Có data trong response', function () { pm.expect(json).to.have.property('data'); });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Cập nhật hồ sơ",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/account/profile",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "account",
+                "profile"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"{{customer_name}}\",\n  \"phone\": \"{{customer_phone}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', function () {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([200]);",
+                  "});",
+                  "if ([200].includes(pm.response.code)) {",
+                  "  const json = pm.response.json();",
+                  "  pm.test('Có data trong response', function () { pm.expect(json).to.have.property('data'); });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Đăng xuất",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/auth/logout",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "logout"
+              ]
+            },
+            "description": "Chạy khi kết thúc thao tác. Muốn gọi API được bảo vệ sau đó cần đăng nhập lại."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', function () {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([200]);",
+                  "});",
+                  "if ([200].includes(pm.response.code)) {",
+                  "  const json = pm.response.json();",
+                  "  pm.test('Đã đăng xuất', function () { pm.expect(json.data.loggedOut).to.eql(true); });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "03 — Customer Orders",
+      "description": "Đăng nhập customer. Tạo đơn → đọc chi tiết → chọn hủy đơn hoặc chuyển sang luồng admin.",
+      "item": [
+        {
+          "name": "Tạo đơn COD / gửi lại cùng Idempotency-Key",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{idempotency_key}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/orders",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "orders"
+              ]
+            },
+            "description": "Đăng nhập customer trước. Lần đầu trả 201, gửi lại cùng key trả 200 và meta.replayed=true. Xóa giá trị idempotency_key trong Collection Variables để tạo đơn mới. Request trừ tồn kho; giá và phí giao hàng do server tính.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customer\": {\n    \"name\": \"{{customer_name}}\",\n    \"phone\": \"{{customer_phone}}\"\n  },\n  \"shipping_address\": {\n    \"line1\": \"140 Lê Trọng Tấn, phường Tây Thạnh\",\n    \"city\": \"Thành phố Hồ Chí Minh\"\n  },\n  \"items\": [\n    {\n      \"product_id\": \"{{checkout_product_id}}\",\n      \"quantity\": 1\n    }\n  ],\n  \"payment_method\": \"COD\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (!pm.collectionVariables.get('idempotency_key')) {",
+                  "  pm.collectionVariables.set('idempotency_key', pm.variables.replaceIn('{{$guid}}'));",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 hoặc 201', function () {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([200,201]);",
+                  "});",
+                  "if ([200,201].includes(pm.response.code)) {",
+                  "  const json = pm.response.json();",
+                  "  const document = json.data;",
+                  "if (document && document._id && document._rev) {",
+                  "  pm.collectionVariables.set('order_id', document._id);",
+                  "  pm.collectionVariables.set('order_rev', document._rev);",
+                  "}",
+                  "pm.test('Có trạng thái replay', function () { pm.expect(json.meta.replayed).to.eql(pm.response.code === 200); });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Danh sách đơn hàng",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/orders",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "orders"
+              ]
+            },
+            "description": "Customer chỉ thấy đơn của mình; admin thấy tất cả. Không tự chọn đơn từ danh sách để tránh ghi đè order_id đang thao tác."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', function () {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([200]);",
+                  "});",
+                  "if ([200].includes(pm.response.code)) {",
+                  "  const json = pm.response.json();",
+                  "  pm.test('Có data trong response', function () { pm.expect(json).to.have.property('data'); });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Chi tiết đơn và lịch sử giao hàng",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/orders/{{order_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "orders",
+                "{{order_id}}"
+              ]
+            },
+            "description": "Lưu _rev mới nhất vào order_rev. Cần đọc lại sau khi thay đổi từ giao diện hoặc client khác."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', function () {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([200]);",
+                  "});",
+                  "if ([200].includes(pm.response.code)) {",
+                  "  const json = pm.response.json();",
+                  "  const document = json.data.order;",
+                  "if (document && document._id && document._rev) {",
+                  "  pm.collectionVariables.set('order_id', document._id);",
+                  "  pm.collectionVariables.set('order_rev', document._rev);",
+                  "}",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Customer hủy đơn",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/orders/{{order_id}}/cancel",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "orders",
+                "{{order_id}}",
+                "cancel"
+              ]
+            },
+            "description": "Chỉ chủ đơn được hủy khi pending/confirmed. Hoàn tồn kho. Chọn luồng hủy hoặc luồng admin giao hàng; không chạy nối tiếp cả hai trên cùng đơn.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"_rev\": \"{{order_rev}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', function () {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([200]);",
+                  "});",
+                  "if ([200].includes(pm.response.code)) {",
+                  "  const json = pm.response.json();",
+                  "  const document = json.data;",
+                  "if (document && document._id && document._rev) {",
+                  "  pm.collectionVariables.set('order_id', document._id);",
+                  "  pm.collectionVariables.set('order_rev', document._rev);",
+                  "}",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "04 — Admin Login & Order Status",
+      "description": "Đăng nhập admin trước khi dùng các folder admin. Luồng giao hàng yêu cầu đơn chưa bị hủy.",
+      "item": [
+        {
+          "name": "Đăng nhập admin",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/auth/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Tạo admin bằng npm run admin:init trước. Dùng cùng cookie jar; session customer sẽ được thay thế.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{admin_email}}\",\n  \"password\": \"{{admin_password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', function () {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([200]);",
+                  "});",
+                  "if ([200].includes(pm.response.code)) {",
+                  "  const json = pm.response.json();",
+                  "  pm.test('Đúng role admin', function () { pm.expect(json.data.role).to.eql('admin'); });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Kiểm tra quyền admin",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin/auth-check",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "auth-check"
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', function () {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([200]);",
+                  "});",
+                  "if ([200].includes(pm.response.code)) {",
+                  "  const json = pm.response.json();",
+                  "  pm.test('Có quyền admin', function () { pm.expect(json.data.authorized).to.eql(true); });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Chuyển đơn → confirmed",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin/orders/{{order_id}}/status",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "orders",
+                "{{order_id}}",
+                "status"
+              ]
+            },
+            "description": "Đăng nhập admin; cần _rev hiện tại. Đơn phải đang pending. Nếu đã hủy, tạo đơn mới với key mới trước. Luồng mẫu: pending → confirmed → packing → shipping → delivered. Các nhánh khác: pending/confirmed/packing → cancelled; shipping → failed; failed → shipping/cancelled. Để thử nhánh khác, sửa status và đọc lại đơn trước khi gửi.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"_rev\": \"{{order_rev}}\",\n  \"status\": \"confirmed\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', function () {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([200]);",
+                  "});",
+                  "if ([200].includes(pm.response.code)) {",
+                  "  const json = pm.response.json();",
+                  "  const document = json.data.order;",
+                  "if (document && document._id && document._rev) {",
+                  "  pm.collectionVariables.set('order_id', document._id);",
+                  "  pm.collectionVariables.set('order_rev', document._rev);",
+                  "}",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Chuyển đơn → packing",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin/orders/{{order_id}}/status",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "orders",
+                "{{order_id}}",
+                "status"
+              ]
+            },
+            "description": "Đăng nhập admin; cần _rev hiện tại.  Luồng mẫu: pending → confirmed → packing → shipping → delivered. Các nhánh khác: pending/confirmed/packing → cancelled; shipping → failed; failed → shipping/cancelled. Để thử nhánh khác, sửa status và đọc lại đơn trước khi gửi.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"_rev\": \"{{order_rev}}\",\n  \"status\": \"packing\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', function () {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([200]);",
+                  "});",
+                  "if ([200].includes(pm.response.code)) {",
+                  "  const json = pm.response.json();",
+                  "  const document = json.data.order;",
+                  "if (document && document._id && document._rev) {",
+                  "  pm.collectionVariables.set('order_id', document._id);",
+                  "  pm.collectionVariables.set('order_rev', document._rev);",
+                  "}",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Chuyển đơn → shipping",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin/orders/{{order_id}}/status",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "orders",
+                "{{order_id}}",
+                "status"
+              ]
+            },
+            "description": "Đăng nhập admin; cần _rev hiện tại.  Luồng mẫu: pending → confirmed → packing → shipping → delivered. Các nhánh khác: pending/confirmed/packing → cancelled; shipping → failed; failed → shipping/cancelled. Để thử nhánh khác, sửa status và đọc lại đơn trước khi gửi.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"_rev\": \"{{order_rev}}\",\n  \"status\": \"shipping\",\n  \"delivery\": {\n    \"carrier\": \"Giao hàng Postman\",\n    \"tracking_code\": \"{{tracking_code}}\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', function () {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([200]);",
+                  "});",
+                  "if ([200].includes(pm.response.code)) {",
+                  "  const json = pm.response.json();",
+                  "  const document = json.data.order;",
+                  "if (document && document._id && document._rev) {",
+                  "  pm.collectionVariables.set('order_id', document._id);",
+                  "  pm.collectionVariables.set('order_rev', document._rev);",
+                  "}",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Chuyển đơn → delivered",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin/orders/{{order_id}}/status",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "orders",
+                "{{order_id}}",
+                "status"
+              ]
+            },
+            "description": "Đăng nhập admin; cần _rev hiện tại.  Luồng mẫu: pending → confirmed → packing → shipping → delivered. Các nhánh khác: pending/confirmed/packing → cancelled; shipping → failed; failed → shipping/cancelled. Để thử nhánh khác, sửa status và đọc lại đơn trước khi gửi.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"_rev\": \"{{order_rev}}\",\n  \"status\": \"delivered\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', function () {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([200]);",
+                  "});",
+                  "if ([200].includes(pm.response.code)) {",
+                  "  const json = pm.response.json();",
+                  "  const document = json.data.order;",
+                  "if (document && document._id && document._rev) {",
+                  "  pm.collectionVariables.set('order_id', document._id);",
+                  "  pm.collectionVariables.set('order_rev', document._rev);",
+                  "}",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "05 — Admin Catalog CRUD",
+      "description": "Luồng độc lập: tạo danh mục → sửa danh mục → tạo sản phẩm → sửa sản phẩm → xóa sản phẩm → xóa danh mục. ID thử nghiệm tách riêng sản phẩm checkout.",
+      "item": [
+        {
+          "name": "Danh sách danh mục (cả inactive)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin/categories",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "categories"
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', function () {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([200]);",
+                  "});",
+                  "if ([200].includes(pm.response.code)) {",
+                  "  const json = pm.response.json();",
+                  "  pm.test('Danh sách danh mục', function () { pm.expect(json.data).to.be.an('array'); });",
+                  "const document = json.data.find(d => d._id === pm.collectionVariables.get('catalog_category_id'));",
+                  "if (document && document._id && document._rev) {",
+                  "  pm.collectionVariables.set('catalog_category_id', document._id);",
+                  "  pm.collectionVariables.set('catalog_category_rev', document._rev);",
+                  "  pm.collectionVariables.set('catalog_category_slug', document.slug);",
+                  "}",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Tạo danh mục thử nghiệm",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin/categories",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "categories"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Danh mục Postman\",\n  \"slug\": \"{{catalog_category_slug}}\",\n  \"is_active\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set('catalog_category_slug', 'postman-category-' + pm.variables.replaceIn('{{$guid}}'));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 201', function () {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([201]);",
+                  "});",
+                  "if ([201].includes(pm.response.code)) {",
+                  "  const json = pm.response.json();",
+                  "  const document = json.data;",
+                  "if (document && document._id && document._rev) {",
+                  "  pm.collectionVariables.set('catalog_category_id', document._id);",
+                  "  pm.collectionVariables.set('catalog_category_rev', document._rev);",
+                  "  pm.collectionVariables.set('catalog_category_slug', document.slug);",
+                  "}",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Cập nhật danh mục",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin/categories/{{catalog_category_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "categories",
+                "{{catalog_category_id}}"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Danh mục Postman đã sửa\",\n  \"slug\": \"{{catalog_category_slug}}\",\n  \"is_active\": true,\n  \"_rev\": \"{{catalog_category_rev}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', function () {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([200]);",
+                  "});",
+                  "if ([200].includes(pm.response.code)) {",
+                  "  const json = pm.response.json();",
+                  "  const document = json.data;",
+                  "if (document && document._id && document._rev) {",
+                  "  pm.collectionVariables.set('catalog_category_id', document._id);",
+                  "  pm.collectionVariables.set('catalog_category_rev', document._rev);",
+                  "  pm.collectionVariables.set('catalog_category_slug', document.slug);",
+                  "}",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Danh sách sản phẩm (cả inactive)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin/products",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "products"
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', function () {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([200]);",
+                  "});",
+                  "if ([200].includes(pm.response.code)) {",
+                  "  const json = pm.response.json();",
+                  "  pm.test('Danh sách sản phẩm', function () { pm.expect(json.data).to.be.an('array'); });",
+                  "const document = json.data.find(d => d._id === pm.collectionVariables.get('catalog_product_id'));",
+                  "if (document && document._id && document._rev) {",
+                  "  pm.collectionVariables.set('catalog_product_id', document._id);",
+                  "  pm.collectionVariables.set('catalog_product_rev', document._rev);",
+                  "  pm.collectionVariables.set('catalog_product_slug', document.slug);",
+                  "}",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Tạo sản phẩm thử nghiệm",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin/products",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "products"
+              ]
+            },
+            "description": "Tạo danh mục thử nghiệm trước để có catalog_category_id.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Sản phẩm Postman\",\n  \"slug\": \"{{catalog_product_slug}}\",\n  \"category_id\": \"{{catalog_category_id}}\",\n  \"price\": 65000,\n  \"stock\": 10,\n  \"description\": \"Sản phẩm dùng thử API từ Postman.\",\n  \"images\": [],\n  \"is_active\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set('catalog_product_slug', 'postman-product-' + pm.variables.replaceIn('{{$guid}}'));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 201', function () {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([201]);",
+                  "});",
+                  "if ([201].includes(pm.response.code)) {",
+                  "  const json = pm.response.json();",
+                  "  const document = json.data;",
+                  "if (document && document._id && document._rev) {",
+                  "  pm.collectionVariables.set('catalog_product_id', document._id);",
+                  "  pm.collectionVariables.set('catalog_product_rev', document._rev);",
+                  "  pm.collectionVariables.set('catalog_product_slug', document.slug);",
+                  "}",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Cập nhật sản phẩm",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin/products/{{catalog_product_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "products",
+                "{{catalog_product_id}}"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Sản phẩm Postman đã sửa\",\n  \"slug\": \"{{catalog_product_slug}}\",\n  \"category_id\": \"{{catalog_category_id}}\",\n  \"price\": 70000,\n  \"stock\": 10,\n  \"description\": \"Sản phẩm dùng thử API từ Postman.\",\n  \"images\": [],\n  \"is_active\": true,\n  \"_rev\": \"{{catalog_product_rev}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', function () {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([200]);",
+                  "});",
+                  "if ([200].includes(pm.response.code)) {",
+                  "  const json = pm.response.json();",
+                  "  const document = json.data;",
+                  "if (document && document._id && document._rev) {",
+                  "  pm.collectionVariables.set('catalog_product_id', document._id);",
+                  "  pm.collectionVariables.set('catalog_product_rev', document._rev);",
+                  "  pm.collectionVariables.set('catalog_product_slug', document.slug);",
+                  "}",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Xóa sản phẩm thử nghiệm",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin/products/{{catalog_product_id}}?rev={{catalog_product_rev}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "products",
+                "{{catalog_product_id}}"
+              ],
+              "query": [
+                {
+                  "key": "rev",
+                  "value": "{{catalog_product_rev}}"
+                }
+              ]
+            },
+            "description": "Xóa mềm document CouchDB bằng ID và revision đã lưu từ sản phẩm thử nghiệm. Response là kết quả ghi CouchDB."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', function () {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([200]);",
+                  "});",
+                  "if ([200].includes(pm.response.code)) {",
+                  "  const json = pm.response.json();",
+                  "  pm.test('Đã xóa sản phẩm', function () { pm.expect(json.data.ok).to.eql(true); });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Xóa danh mục thử nghiệm",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin/categories/{{catalog_category_id}}?rev={{catalog_category_rev}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "categories",
+                "{{catalog_category_id}}"
+              ],
+              "query": [
+                {
+                  "key": "rev",
+                  "value": "{{catalog_category_rev}}"
+                }
+              ]
+            },
+            "description": "Chạy sau khi xóa sản phẩm thử nghiệm. Danh mục còn sản phẩm trả 409 CATEGORY_IN_USE."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', function () {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([200]);",
+                  "});",
+                  "if ([200].includes(pm.response.code)) {",
+                  "  const json = pm.response.json();",
+                  "  pm.test('Đã xóa danh mục', function () { pm.expect(json.data.ok).to.eql(true); });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "06 — Admin Users",
+      "description": "Dùng session admin. Chọn tài khoản → đọc chi tiết để lấy _rev → cập nhật.",
+      "item": [
+        {
+          "name": "Danh sách tài khoản",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin/users",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "users"
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', function () {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([200]);",
+                  "});",
+                  "if ([200].includes(pm.response.code)) {",
+                  "  const json = pm.response.json();",
+                  "  pm.test('Có data trong response', function () { pm.expect(json).to.have.property('data'); });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Chi tiết tài khoản",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin/users/{{managed_user_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "users",
+                "{{managed_user_id}}"
+              ]
+            },
+            "description": "managed_user_id được lưu khi đăng ký/đăng nhập customer. Có thể chọn ID khác từ danh sách. Lưu tên, phone, account_status và _rev cho request cập nhật."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', function () {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([200]);",
+                  "});",
+                  "if ([200].includes(pm.response.code)) {",
+                  "  const json = pm.response.json();",
+                  "  const document = json.data;",
+                  "if (document && document._id && document._rev) {",
+                  "  pm.collectionVariables.set('managed_user_id', document._id);",
+                  "  pm.collectionVariables.set('managed_user_rev', document._rev);",
+                  "}",
+                  "for (const field of ['name', 'phone', 'account_status']) {",
+                  "  pm.collectionVariables.set('managed_user_' + field, json.data[field]);",
+                  "}",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Cập nhật tài khoản",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin/users/{{managed_user_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "users",
+                "{{managed_user_id}}"
+              ]
+            },
+            "description": "Gọi Chi tiết tài khoản trước. Sửa name/phone hoặc đổi account_status thành active/disabled. Không hỗ trợ đổi role; không tự khóa mình hoặc admin cuối cùng.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"_rev\": \"{{managed_user_rev}}\",\n  \"name\": \"{{managed_user_name}}\",\n  \"phone\": \"{{managed_user_phone}}\",\n  \"account_status\": \"{{managed_user_account_status}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', function () {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([200]);",
+                  "});",
+                  "if ([200].includes(pm.response.code)) {",
+                  "  const json = pm.response.json();",
+                  "  const document = json.data;",
+                  "if (document && document._id && document._rev) {",
+                  "  pm.collectionVariables.set('managed_user_id', document._id);",
+                  "  pm.collectionVariables.set('managed_user_rev', document._rev);",
+                  "}",
+                  "for (const field of ['name', 'phone', 'account_status']) {",
+                  "  pm.collectionVariables.set('managed_user_' + field, json.data[field]);",
+                  "}",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "07 — Admin Database & Backup",
+      "description": "Dùng session admin. Restore cần chọn file và database đích chưa tồn tại.",
+      "item": [
+        {
+          "name": "Tổng quan database, indexes và views",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin/database/overview",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "database",
+                "overview"
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', function () {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([200]);",
+                  "});",
+                  "if ([200].includes(pm.response.code)) {",
+                  "  const json = pm.response.json();",
+                  "  pm.test('Có data trong response', function () { pm.expect(json).to.have.property('data'); });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Danh sách backup",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin/database/backups",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "database",
+                "backups"
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', function () {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([200]);",
+                  "});",
+                  "if ([200].includes(pm.response.code)) {",
+                  "  const json = pm.response.json();",
+                  "  pm.test('Danh sách backup', function () { pm.expect(json.data).to.be.an('array'); });",
+                  "const backup = json.data.find(item => item.status === 'ready');",
+                  "if (backup) pm.collectionVariables.set('backup_id', backup.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Tạo backup",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin/database/backups",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "database",
+                "backups"
+              ]
+            },
+            "description": "Tạo snapshot trên server trong .data/backups, chứa cả dữ liệu nhạy cảm. Lưu backup_id để tải."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 201', function () {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([201]);",
+                  "});",
+                  "if ([201].includes(pm.response.code)) {",
+                  "  const json = pm.response.json();",
+                  "  pm.test('Backup sẵn sàng', function () { pm.expect(json.data.status).to.eql('ready'); });",
+                  "pm.collectionVariables.set('backup_id', json.data.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Tải backup JSON",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin/database/backups/{{backup_id}}/download",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "database",
+                "backups",
+                "{{backup_id}}",
+                "download"
+              ]
+            },
+            "description": "Dùng Save Response → Save to a file hoặc Send and Download để lưu file JSON dùng trong Restore."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', function () {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([200]);",
+                  "});",
+                  "if ([200].includes(pm.response.code)) {",
+                  "  const json = pm.response.json();",
+                  "  pm.test('Đúng định dạng backup', function () { pm.expect(json.format).to.eql('retail-shop-couchdb-backup'); pm.expect(json.version).to.eql(1); pm.expect(json.documents).to.be.an('array'); });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Restore backup vào database mới — chọn file trước",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin/database/restore",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "database",
+                "restore"
+              ]
+            },
+            "description": "Chạy thủ công sau khi chọn file. Tạo database mới; tên phải khớp retail_shop_restore_[a-z0-9_]{3,40}, chưa tồn tại và khác database đang dùng. Không tự đặt Content-Type vì Postman cần sinh multipart boundary. Database mới không được tự xóa sau request.",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": null,
+                  "description": "Chọn file JSON tải từ request Tải backup; tối đa 25 MiB."
+                },
+                {
+                  "key": "targetDatabase",
+                  "type": "text",
+                  "value": "{{restore_database}}"
+                },
+                {
+                  "key": "confirmation",
+                  "type": "text",
+                  "value": "RESTORE"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', function () {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([200]);",
+                  "});",
+                  "if ([200].includes(pm.response.code)) {",
+                  "  const json = pm.response.json();",
+                  "  pm.test('Restore được xác minh', function () { pm.expect(json.data.verified).to.eql(true); pm.expect(json.data.targetDatabase).to.eql(pm.variables.get('restore_database')); });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        }
+      ]
+    }
+  ]
+}
