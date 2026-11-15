@@ -9,6 +9,9 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "db:init": "node --env-file=.env.local scripts/init-db.mjs --init-only",
+    "db:seed": "node --env-file=.env.local scripts/init-db.mjs --seed-only",
+    "db:setup": "node --env-file=.env.local scripts/init-db.mjs",
     "admin:init": "node scripts/init-admin.mjs",
     "test:ui-smoke": "node scripts/ui-smoke.mjs"
   },

@@ -5,7 +5,7 @@ Nền tảng website bán lẻ cho đồ án quản trị Apache CouchDB bằng 
 ## Yêu cầu
 
 - Node.js 20.9 trở lên (môi trường đã kiểm tra: Node 24.14.1).
-- Apache CouchDB đang chạy và database `retail_shop` đã tồn tại.
+- Apache CouchDB đang chạy. Script bên dưới tạo database `retail_shop` nếu chưa có.
 - Fauxton: `http://127.0.0.1:5984/_utils/`.
 
 ## Chạy trên Windows
@@ -14,6 +14,7 @@ Nền tảng website bán lẻ cho đồ án quản trị Apache CouchDB bằng 
 Copy-Item .env.example .env.local
 # Điền credentials vào .env.local, không commit file này.
 npm.cmd install
+npm.cmd run db:init
 npm.cmd run dev
 ```
 
@@ -22,6 +23,48 @@ Mở `http://localhost:3000`, sản phẩm tại `/products`, giỏ hàng tại 
 ## Biến môi trường
 
 `COUCHDB_URL`, `COUCHDB_DATABASE`, `COUCHDB_USERNAME`, `COUCHDB_PASSWORD`, `COUCHDB_TIMEOUT_MS`, `SESSION_SECRET`, `SESSION_TTL_SECONDS`. Chỉ được đọc phía server; không dùng tiền tố `NEXT_PUBLIC_`. `SESSION_SECRET` phải là chuỗi ngẫu nhiên ít nhất 32 ký tự.
+
+## Tạo database và dữ liệu mẫu
+
+CouchDB lưu document JSON trong một database, không có bảng hay lệnh SQL `CREATE TABLE`. Trường `type` phân biệt `user`, `category`, `product`, `order`, `delivery`. Cấu trúc nằm trong [docs/COUCHDB_SCHEMA.md](docs/COUCHDB_SCHEMA.md).
+
+Điền cấu hình CouchDB trong `.env.local`. Các lệnh `db:*` tự đọc file này; biến đã đặt trong shell được ưu tiên. Tài khoản CouchDB cần quyền tạo database và design document.
+
+```powershell
+# Tạo database, 8 Mango indexes và _design/reports với 2 view.
+npm.cmd run db:init
+
+# Chèn dữ liệu mẫu vào database đã khởi tạo.
+# Chọn mật khẩu riêng cho hai tài khoản khách hàng demo.
+$env:SEED_CUSTOMER_PASSWORD = 'DemoShop2026!'
+npm.cmd run db:seed
+Remove-Item Env:SEED_CUSTOMER_PASSWORD
+```
+
+Hoặc đặt `SEED_CUSTOMER_PASSWORD` rồi chạy `npm.cmd run db:setup` để thực hiện cả hai bước. Mật khẩu demo phải có ít nhất 10 ký tự, gồm chữ hoa, chữ thường, số và tối đa 72 byte UTF-8. Có thể đặt biến này trong `.env.local`; script chỉ lưu bcrypt hash vào CouchDB và không log mật khẩu.
+
+| Loại document | Số lượng | Nội dung |
+|---|---:|---|
+| `user` | 2 | `an.demo@example.com`, `binh.demo@example.com`, role `customer` |
+| `category` | 3 | Văn phòng phẩm, phụ kiện máy tính, đồ dùng gia đình |
+| `product` | 6 | Có sản phẩm hết hàng và sản phẩm ngừng bán |
+| `order` | 8 | Đủ 7 trạng thái; 2 đơn delivered đã paid |
+| `delivery` | 4 | Đang giao, đã giao và giao thất bại |
+
+Hai tài khoản khách hàng dùng mật khẩu đã chọn trong `SEED_CUSTOMER_PASSWORD`. Admin được tạo riêng bằng `admin:init` bên dưới. Ngày mẫu cố định trong tháng 11/2026; tổng doanh thu của riêng bộ mẫu là **1.400.000 VND**, nhóm theo ngày tạo đơn.
+
+Các file để xem hoặc sửa bộ khởi tạo:
+
+- [database/seed.mjs](database/seed.mjs): dữ liệu mẫu và quan hệ giữa document, tổng tiền được tính từ items.
+- [database/indexes.json](database/indexes.json): định nghĩa Mango indexes.
+- [database/reports.json](database/reports.json): các view `orders_by_status` và `revenue_by_day`.
+- [scripts/init-db.mjs](scripts/init-db.mjs): tạo database và insert theo thứ tự user → category → product → order → delivery.
+
+Chạy lại sẽ bỏ qua `_id` đã tồn tại hoặc đã xóa, không reset database, không trừ tồn kho thêm và không đổi mật khẩu demo đã có. Tồn kho trong bộ mẫu là số lượng còn lại sau các đơn đã giữ hàng. Script giữ nguyên index/view hiện có; nếu index trùng tên nhưng khác định nghĩa hoặc reports thiếu view bắt buộc, script dừng để kiểm tra thủ công. Nếu một tham chiếu cần thiết đã bị xóa, seed dừng trước khi ghi.
+
+`_bulk_docs` có thể thành công một phần; script kiểm tra kết quả từng document và báo lỗi, không tự rollback. Sau khi xử lý lỗi có thể chạy lại để bổ sung phần thiếu. Có thể xem kết quả trên Fauxton tại `http://127.0.0.1:5984/_utils/` hoặc trang `/admin/database` của ứng dụng.
+
+API sử dụng: [tạo database](https://docs.couchdb.org/en/stable/api/database/common.html#put--db), [Mango indexes](https://docs.couchdb.org/en/stable/api/database/find.html#post--db-_index), [bulk documents](https://docs.couchdb.org/en/stable/api/database/bulk-api.html#post--db-_bulk_docs).
 
 ## Khởi tạo Admin
 

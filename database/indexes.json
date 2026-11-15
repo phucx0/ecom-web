@@ -1,0 +1,10 @@
+[
+  { "name": "idx_type", "fields": ["type"] },
+  { "name": "idx_type_status", "fields": ["type", "status"] },
+  { "name": "idx_delivery_order", "fields": ["type", "order_id"] },
+  { "name": "idx_user_orders", "fields": ["type", "user_id", "created_at"] },
+  { "name": "idx_type_category", "fields": ["type", "category_id"] },
+  { "name": "idx_type_slug", "fields": ["type", "slug"] },
+  { "name": "idx_type_email", "fields": ["type", "email"] },
+  { "name": "idx_type_active", "fields": ["type", "is_active"] }
+]

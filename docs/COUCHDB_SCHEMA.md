@@ -25,9 +25,15 @@ Bắt buộc: `_id`, `type`, `name`, `slug`, `category_id`, `price`, `stock`, `d
 
 Bắt buộc: `_id`, `type`, `user_id`, `customer{name,phone}`, `shipping_address{line1,city}`, `items[]`, `subtotal`, `shipping_fee`, `total`, `payment_method`, `payment_status`, `status`, `created_at`, `status_history[]`. Item bắt buộc có `product_id`, snapshot `name`, `quantity > 0`, `unit_price >= 0`. `total = subtotal + shipping_fee`; Phase hiện tại chốt `payment_method=COD`, `payment_status=unpaid|paid|failed`.
 
+Theo code checkout hiện tại, order mới còn có `idempotency_key` và `inventory_state=reserving|reserved|released`. `_id` của order mới là `order:<sha256(user_id + ':' + idempotency_key)>`. `status` thuộc `pending|confirmed|packing|shipping|delivered|cancelled|failed`; mỗi `status_history` entry có `status` và `at`.
+
+Checkout hiện tại giữ hàng ngay khi tạo đơn: `reserved` nghĩa là đã trừ tồn kho, kể cả order còn `pending`; `released` nghĩa là đã hoàn kho. Bộ mẫu sử dụng cùng quy ước này, không tự trừ kho khi import. Phí vận chuyển hiện tại là 0 VND khi `subtotal >= 500000`, ngược lại 30000 VND.
+
 ### delivery — `delivery:DEL001`
 
 Bắt buộc: `_id`, `type`, `order_id`, `carrier`, `tracking_code`, `status`, `history[]`. `order_id` trỏ tới order; mỗi history entry có `status` và `at`.
+
+`status` của delivery thuộc `shipping|delivered|failed`.
 
 ## Index và Views hiện có
 
@@ -37,7 +43,19 @@ Bắt buộc: `_id`, `type`, `order_id`, `carrier`, `tracking_code`, `status`, `
 | `idx_delivery_order` | `type,order_id` | tìm delivery của order |
 | `idx_user_orders` | `type,user_id,created_at` | lịch sử order theo user |
 | `idx_type_category` | `type,category_id` | sản phẩm theo category |
+| `idx_type` | `type` | liệt kê document theo loại |
+| `idx_type_slug` | `type,slug` | tra cứu product/category theo slug |
+| `idx_type_email` | `type,email` | tra cứu tài khoản theo email |
+| `idx_type_active` | `type,is_active` | danh mục/sản phẩm đang hoạt động |
 | `orders_by_status` | order có status; `_count` | tổng order theo status |
 | `revenue_by_day` | order delivered, paid; `_sum(total)` | doanh thu theo ngày |
 
-Phase 0 không tạo hoặc sửa index/design document.
+Phase 0 ban đầu không tạo hoặc sửa index/design document. Script `npm run db:init` hiện tạo database cùng các index còn thiếu và `_design/reports` nếu chưa tồn tại. View doanh thu emit `created_at.slice(0, 10)` làm key, chỉ tính order `delivered` và `paid`.
+
+## Khởi tạo và dữ liệu mẫu
+
+- `npm run db:init`: tạo database/index/view; không chèn dữ liệu kinh doanh.
+- `npm run db:seed`: chèn 23 document mẫu; cần `SEED_CUSTOMER_PASSWORD` khi tạo khách hàng mới.
+- `npm run db:setup`: thực hiện cả hai bước.
+
+Các lệnh đọc `.env.local`. Dữ liệu nằm trong `database/seed.mjs`, index trong `database/indexes.json`, view trong `database/reports.json`. `_rev` do CouchDB tự cấp khi insert. Script không ghi đè document/index/view hiện có và không khôi phục document đã xóa; xem hướng dẫn chi tiết trong README.
