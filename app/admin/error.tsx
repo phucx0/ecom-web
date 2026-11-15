@@ -1,1 +1,3 @@
-"use client";import {Button} from "@/components/ui/button";export default function ErrorPage({error,reset}:{error:Error&{digest?:string};reset:()=>void}){return <div className="rounded-xl border border-red-200 bg-red-50 p-8"><h1 className="text-xl font-bold text-red-800">Không thể tải khu vực quản trị</h1><p className="mt-2 text-sm text-red-700">{error.message||"Đã xảy ra lỗi khi lấy dữ liệu."}</p><Button className="mt-5" onClick={reset}>Thử lại</Button></div>}
+"use client";
+import { Button } from "@/components/ui/button";
+export default function ErrorPage({reset}:{error:Error&{digest?:string};reset:()=>void}) {return <div className="panel border-red-200 p-6 sm:p-8"><h1 className="text-xl font-semibold">Không thể tải khu vực quản trị</h1><p role="alert" className="mt-3 text-sm text-muted-foreground">Không thể lấy dữ liệu. Kiểm tra kết nối và thử tải lại.</p><Button className="mt-5" onClick={reset}>Thử lại</Button></div>;}

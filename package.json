@@ -9,7 +9,8 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "admin:init": "node scripts/init-admin.mjs"
+    "admin:init": "node scripts/init-admin.mjs",
+    "test:ui-smoke": "node scripts/ui-smoke.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",

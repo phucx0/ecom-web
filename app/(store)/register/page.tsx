@@ -1,4 +1,4 @@
 import { Suspense } from "react";
 import { AuthForm } from "@/components/auth/auth-form";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-export default function RegisterPage() { return <div className="mx-auto max-w-md"><Card><CardHeader><CardTitle>Tạo tài khoản</CardTitle><p className="text-sm text-slate-600">Thông tin được kiểm tra và mật khẩu được hash trước khi lưu.</p></CardHeader><CardContent><Suspense fallback={<p>Đang tải...</p>}><AuthForm mode="register" /></Suspense></CardContent></Card></div>; }
+export const metadata={title:"Đăng ký"};
+export default function RegisterPage() {return <div className="mx-auto max-w-md py-2 sm:py-6"><div className="panel p-6 sm:p-8"><h1 className="text-2xl font-semibold">Tạo tài khoản của bạn</h1><p className="mb-7 mt-3 text-sm leading-6 text-muted-foreground">Lưu thông tin liên hệ và theo dõi đơn hàng tại một nơi.</p><Suspense fallback={<p role="status">Đang tải…</p>}><AuthForm mode="register" /></Suspense></div></div>;}

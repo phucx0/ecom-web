@@ -1,3 +1,19 @@
 "use client";
-import {useState} from "react";import {ShoppingCart} from "lucide-react";import {toast} from "sonner";import {Button} from "@/components/ui/button";import {useCart} from "./cart-provider";import type {ProductDocument} from "@/lib/catalog/types";
-export function AddToCartButton({product}:{product:ProductDocument}){const{add}=useCart(),[quantity,setQuantity]=useState(1);function submit(){add({product_id:product._id,slug:product.slug,name:product.name,price:product.price,stock:product.stock},quantity);toast.success(`Đã thêm ${quantity} sản phẩm vào giỏ.`)}return <div className="flex flex-wrap items-center gap-3"><label className="text-sm">Số lượng <input className="ml-2 h-10 w-20 rounded-md border px-3" type="number" min={1} max={product.stock} value={quantity} onChange={e=>setQuantity(Math.max(1,Math.min(product.stock,Number(e.target.value)||1)))}/></label><Button disabled={product.stock<1} onClick={submit}><ShoppingCart className="mr-2 size-4"/>{product.stock<1?"Hết hàng":"Thêm vào giỏ"}</Button></div>}
+import { useState } from "react";
+import { ShoppingBag } from "lucide-react";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { QuantitySelector } from "@/components/ui/quantity-selector";
+import { useCart } from "./cart-provider";
+import type { ProductDocument } from "@/lib/catalog/types";
+export function AddToCartButton({product}:{product:ProductDocument}) {
+  const {add,items,ready}=useCart(),[quantity,setQuantity]=useState(1);
+  const inCart=items.find(i=>i.product_id===product._id)?.quantity||0, remaining=Math.max(0,Math.min(99,product.stock)-inCart);
+  function submit() {
+    if(!remaining) { toast.info("Bạn đã chọn số lượng tối đa có thể mua."); return; }
+    const amount=Math.min(quantity,remaining);
+    add({product_id:product._id,slug:product.slug,name:product.name,price:product.price,stock:product.stock},amount);
+    toast.success(`Đã thêm ${amount} sản phẩm vào giỏ hàng.`);
+  }
+  return <div className="space-y-3"><p className="text-sm font-medium">Số lượng</p><div className="flex flex-wrap items-center gap-3"><QuantitySelector value={Math.min(quantity,Math.max(1,remaining))} max={remaining} onChange={setQuantity} disabled={!remaining||!ready} /><Button size="lg" className="flex-1" disabled={!ready||!remaining} onClick={submit}><ShoppingBag className="size-5" aria-hidden="true" />{product.stock<1?"Hết hàng":remaining<1?"Đã đạt giới hạn":"Thêm vào giỏ hàng"}</Button></div>{inCart>0&&<p className="text-sm text-muted-foreground" role="status">Đã có {inCart} sản phẩm trong giỏ hàng.</p>}</div>;
+}

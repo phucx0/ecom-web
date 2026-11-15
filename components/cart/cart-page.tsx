@@ -1,1 +1,22 @@
-"use client";import Link from "next/link";import {Trash2} from "lucide-react";import {useCart} from "./cart-provider";import {Button} from "@/components/ui/button";import {Input} from "@/components/ui/input";export function CartPage(){const{items,setQuantity,remove}=useCart();const total=items.reduce((s,i)=>s+i.price*i.quantity,0);if(!items.length)return <div className="py-16 text-center"><h1 className="text-3xl font-bold">Giỏ hàng trống</h1><Button asChild className="mt-6"><Link href="/products">Xem sản phẩm</Link></Button></div>;return <div className="space-y-6"><h1 className="text-3xl font-bold">Giỏ hàng</h1>{items.map(i=><div key={i.product_id} className="grid items-center gap-3 rounded-xl border bg-white p-4 sm:grid-cols-[1fr_110px_130px_auto]"><div><Link href={`/products/${i.slug}`} className="font-semibold">{i.name}</Link><p className="text-sm text-slate-500">{i.price.toLocaleString("vi-VN")} ₫</p></div><Input type="number" min={1} max={i.stock} value={i.quantity} onChange={e=>setQuantity(i.product_id,Number(e.target.value))}/><strong>{(i.price*i.quantity).toLocaleString("vi-VN")} ₫</strong><Button variant="ghost" onClick={()=>remove(i.product_id)}><Trash2 className="size-4 text-red-700"/></Button></div>)}<div className="flex items-center justify-between rounded-xl bg-slate-900 p-5 text-white"><strong className="text-2xl">{total.toLocaleString("vi-VN")} ₫</strong><Button asChild><Link href="/checkout">Thanh toán</Link></Button></div></div>}
+"use client";
+import Link from "next/link";
+import { Trash2 } from "lucide-react";
+import { toast } from "sonner";
+import { useCart } from "./cart-provider";
+import { Button } from "@/components/ui/button";
+import { QuantitySelector } from "@/components/ui/quantity-selector";
+import { Price } from "@/components/catalog/price";
+import { EmptyState } from "@/components/shared/empty-state";
+import { Breadcrumbs } from "@/components/shared/breadcrumbs";
+import { Skeleton } from "@/components/ui/skeleton";
+import { OrderSummary } from "./order-summary";
+export function CartPage() {
+  const {items,setQuantity,remove,add,ready,count}=useCart();
+  if(!ready) return <div aria-busy="true" role="status"><span className="sr-only">Đang tải giỏ hàng…</span><Skeleton className="h-60 w-full" /></div>;
+  const subtotal=items.reduce((sum,item)=>sum+item.price*item.quantity,0);
+  function removeItem(item: typeof items[number]) {
+    remove(item.product_id);
+    toast("Đã xóa sản phẩm khỏi giỏ.", {action:{label:"Hoàn tác",onClick:()=>add(item,item.quantity)}});
+  }
+  return <div className="space-y-6"><Breadcrumbs items={[{label:"Trang chủ",href:"/"},{label:"Giỏ hàng"}]} /><div><h1 className="text-3xl font-semibold tracking-tight">Giỏ hàng của bạn</h1><p className="mt-2 text-muted-foreground">{count} sản phẩm đã chọn</p></div>{items.length?<div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_350px]"><div className="min-w-0 space-y-3">{items.map(item=><article key={item.product_id} className="panel grid min-w-0 gap-4 p-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:p-5"><div className="min-w-0"><Link href={`/products/${item.slug}`} className="font-semibold hover:text-primary">{item.name}</Link><p className="mt-1 text-sm text-muted-foreground">Đơn giá: <Price amount={item.price} /></p></div><Price amount={item.price*item.quantity} className="text-primary sm:text-right" /><div className="flex flex-wrap items-center justify-between gap-2 sm:col-span-2"><QuantitySelector label={`Số lượng ${item.name}`} value={item.quantity} max={item.stock} onChange={n=>setQuantity(item.product_id,n)} /><Button variant="ghost" aria-label={`Xóa ${item.name} khỏi giỏ hàng`} onClick={()=>removeItem(item)}><Trash2 className="size-4" aria-hidden="true" />Xóa</Button></div></article>)}<Button asChild variant="ghost"><Link href="/products">Tiếp tục mua sắm</Link></Button></div><OrderSummary subtotal={subtotal} count={count}><Button asChild className="w-full" size="lg"><Link href="/checkout">Tiến hành đặt hàng</Link></Button></OrderSummary></div>:<EmptyState title="Giỏ hàng đang trống" description="Khám phá sản phẩm và thêm những lựa chọn bạn thích vào giỏ." href="/products" label="Khám phá sản phẩm" />}</div>;
+}
