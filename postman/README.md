@@ -45,6 +45,15 @@ PATCH danh mục/sản phẩm yêu cầu đủ các trường như body mẫu; D
 3. Mở request **Restore backup**, chọn file JSON ở **Body → form-data → file**. File tối đa 25 MiB; để Postman tự tạo header multipart.
 4. Đặt `restore_database` trong Collection Variables thành tên mới, ví dụ `retail_shop_restore_postman_demo`. Tên phải khớp `retail_shop_restore_[a-z0-9_]{3,40}`, chưa tồn tại và khác database đang dùng. Giữ `confirmation=RESTORE` rồi gửi. Restore tạo database mới và không tự xóa database này.
 
+### Ảnh local
+
+1. Đăng nhập Admin rồi mở folder `08`, request **Tải ảnh local — chọn file trước**. Chọn ảnh JPG, PNG, WebP hoặc GIF trong **Body → form-data → file**, tối đa 5 MB. Để Postman tự đặt `Content-Type` và multipart boundary.
+2. Gửi request. Server lưu ảnh WebP vào `uploads/products/`; script lưu đường dẫn trả về vào Collection Variable `product_image_url`.
+3. Gửi **Xem ảnh local** để đọc ảnh công khai. Có thể mở đường dẫn `base_url` + `product_image_url` trong trình duyệt.
+4. Để gắn ảnh cho sản phẩm, sửa trường `images` trong body tạo/cập nhật sản phẩm thành `["{{product_image_url}}"]` rồi gửi. PATCH vẫn yêu cầu đầy đủ trường và `_rev` hiện tại. Tối đa 10 ảnh; có thể gửi từng ảnh rồi lưu lại các URL vào mảng.
+
+Upload ghi file lên máy chạy ứng dụng. Ảnh chưa gắn sản phẩm vẫn được giữ lại; backup CouchDB JSON không chứa thư mục ảnh này.
+
 ## Biến và kiểm tra response
 
 - **Environment**: địa chỉ ứng dụng, email, mật khẩu và thông tin customer. Chỉ điền mật khẩu trong Postman; không xuất và commit environment đã chứa mật khẩu thật.

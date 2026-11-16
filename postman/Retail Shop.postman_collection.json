@@ -112,6 +112,11 @@
       "key": "restore_database",
       "value": "retail_shop_restore_postman_demo",
       "type": "string"
+    },
+    {
+      "key": "product_image_url",
+      "value": "",
+      "type": "string"
     }
   ],
   "item": [
@@ -1992,6 +1997,85 @@
                   "  const json = pm.response.json();",
                   "  pm.test('Restore được xác minh', function () { pm.expect(json.data.verified).to.eql(true); pm.expect(json.data.targetDatabase).to.eql(pm.variables.get('restore_database')); });",
                   "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "08 — Ảnh local",
+      "item": [
+        {
+          "name": "Tải ảnh local — chọn file trước",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin/uploads",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "uploads"
+              ]
+            },
+            "description": "Đăng nhập Admin. Chọn JPG, PNG, WebP hoặc GIF tối đa 5 MB. Không tự đặt Content-Type. File được lưu dưới uploads/products; data.url dùng trong mảng images khi tạo/cập nhật sản phẩm. GIF lưu thành ảnh tĩnh.",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": null,
+                  "description": "Chọn một ảnh từ máy tính, tối đa 5 MB."
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 201', function () { pm.response.to.have.status(201); });",
+                  "if (pm.response.code === 201) {",
+                  "  const data = pm.response.json().data;",
+                  "  pm.test('Ảnh local WebP', function () { pm.expect(data.url).to.match(/^\\/uploads\\/products\\/[a-f0-9-]+\\.webp$/); pm.expect(data.type).to.eql('image/webp'); });",
+                  "  pm.collectionVariables.set('product_image_url', data.url);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Xem ảnh local",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}{{product_image_url}}",
+            "description": "Chạy sau upload. Trả nội dung ảnh WebP công khai, không cần đăng nhập. Xem bằng Preview hoặc mở URL trong trình duyệt."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('WebP image', function () { pm.expect(pm.response.headers.get('Content-Type')).to.eql('image/webp'); });"
                 ]
               }
             }

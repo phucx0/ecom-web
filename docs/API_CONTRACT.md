@@ -14,6 +14,8 @@ Response thành công dùng `{ "data": ... }`; lỗi dùng `{ "error": { "code",
 | GET | `/api/orders/:id` | own | tất cả | không tin user_id từ client |
 | PATCH | `/api/admin/orders/:id/status` | không | có | state machine + `_rev` |
 | CRUD | `/api/admin/products/*`, `/api/admin/categories/*` | không | có | validation và conflict rõ ràng |
+| POST | `/api/admin/uploads` | không | có | multipart `file`, tối đa 5 MB, trả đường dẫn WebP local |
+| GET | `/uploads/products/:filename` | có | có | đọc ảnh local công khai; file sai/không tồn tại trả 404 |
 | GET | `/api/admin/reports/*` | không | có | dùng Views đã audit |
 
 ## Endpoint authentication đã triển khai ở Phase 2

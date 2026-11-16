@@ -19,7 +19,7 @@ Bắt buộc: `_id`, `type`, `name`, `slug`, `is_active`. `slug` lowercase, URL-
 
 ### product — `product:P001`
 
-Bắt buộc: `_id`, `type`, `name`, `slug`, `category_id`, `price`, `stock`, `description`, `images`, `is_active`, `created_at`. `price`, `stock` là integer không âm; `category_id` phải trỏ tới category; `images` là mảng URL.
+Bắt buộc: `_id`, `type`, `name`, `slug`, `category_id`, `price`, `stock`, `description`, `images`, `is_active`, `created_at`. `price`, `stock` là integer không âm; `category_id` phải trỏ tới category; `images` là mảng tối đa 10 URL hoặc đường dẫn ảnh local `/uploads/products/<uuid>.webp`. File ảnh nằm trên ổ đĩa máy chạy ứng dụng; CouchDB chỉ lưu đường dẫn, ảnh đầu tiên là ảnh đại diện.
 
 ### order — `order:ORD001`
 

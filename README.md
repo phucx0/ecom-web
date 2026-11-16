@@ -2,6 +2,8 @@
 
 Nền tảng website bán lẻ cho đồ án quản trị Apache CouchDB bằng Fauxton. Hiện dự án hoàn thành phạm vi Phase 0–5: authentication, catalog, checkout COD, quản lý vòng đời đơn và giao hàng.
 
+Hướng dẫn từng bước bằng tiếng Việt: [Cài đặt và sử dụng CouchDB và website](docs/HUONG_DAN_CAI_DAT_VA_SU_DUNG.md), bao gồm thiết lập trên Windows, cấu hình, tạo tài khoản, mua hàng, quản trị và backup/restore.
+
 ## Yêu cầu
 
 - Node.js 20.9 trở lên (môi trường đã kiểm tra: Node 24.14.1).
@@ -72,9 +74,19 @@ API sử dụng: [tạo database](https://docs.couchdb.org/en/stable/api/databas
 
 ## Postman collection
 
-Import [collection](<postman/Retail Shop.postman_collection.json>) và [environment Local](<postman/Retail Shop Local.postman_environment.json>) vào Postman. Chọn **Retail Shop Local**, điền mật khẩu customer/admin rồi đăng nhập theo role. Collection có 35 request, tự lưu ID và `_rev`, dùng cookie session của ứng dụng.
+Import [collection](<postman/Retail Shop.postman_collection.json>) và [environment Local](<postman/Retail Shop Local.postman_environment.json>) vào Postman. Chọn **Retail Shop Local**, điền mật khẩu customer/admin rồi đăng nhập theo role. Collection có 37 request, tự lưu ID và `_rev`, dùng cookie session của ứng dụng.
 
 Xem [hướng dẫn Postman](postman/README.md) để chạy các luồng catalog, đơn hàng, quản lý tài khoản và backup/restore. Gửi từng request theo luồng; không chạy toàn bộ collection một lượt.
+
+## Lưu và hiển thị ảnh local
+
+- File ảnh nằm trong `uploads/products/` tại thư mục gốc dự án. Thư mục được tạo tự động nếu chưa có; ảnh tải lên không được commit vào Git.
+- Vào **Admin → Sản phẩm → Thêm sản phẩm/Sửa**, chọn ảnh từ máy, xem trước, chọn ảnh đại diện rồi **Lưu sản phẩm**. Ảnh hiển thị trong bảng quản trị, danh sách cửa hàng và thư viện ảnh ở trang chi tiết.
+- Chấp nhận JPG, PNG, WebP, GIF, tối đa 5 MB/file và 10 ảnh/sản phẩm. Server kiểm tra nội dung, giới hạn 25 triệu điểm ảnh, chuyển sang WebP, sửa hướng ảnh và thu gọn tối đa 2000 × 2000 px. GIF lấy khung hình đầu tiên.
+- `POST /api/admin/uploads`: đăng nhập Admin, gửi `multipart/form-data` với một trường `file`. Response `201` có `data.url`, ví dụ `/uploads/products/<uuid>.webp`. Lưu đường dẫn này vào mảng `images` khi tạo/cập nhật sản phẩm; URL ảnh bên ngoài vẫn được hỗ trợ.
+- `GET /uploads/products/<uuid>.webp` trả ảnh công khai, dùng được ngay sau khi tải lên cả với `next start`, không cần build lại.
+- Gỡ ảnh khỏi sản phẩm hoặc rời form chưa lưu chỉ bỏ liên kết, không xóa file trên ổ đĩa. File tải lên được giữ lại; hiện chưa có chức năng dọn ảnh không còn sử dụng.
+- Khi chuyển máy hoặc sao lưu, chép cả `uploads/products/` cùng dữ liệu CouchDB. Backup JSON hiện tại chỉ chứa database, không kèm ảnh local. Máy chạy ứng dụng cần ổ đĩa có quyền ghi và được giữ lại qua các lần khởi động/deploy.
 
 ## Kiểm tra
 
